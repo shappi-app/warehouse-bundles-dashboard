@@ -12,21 +12,31 @@
     <h1>Bundle Dashboard</h1>
   </header>
 
-  <div id="top-controls">
-    <div id="upload-area">
-      <input type="file" id="csvFileInput" accept=".csv" />
-    </div>
-    <div id="filters-area">
-      <div id="filter-buttons">
-        <button data-filter="today">Today</button>
-        <button data-filter="this-week">This Week</button>
-        <button data-filter="next-week">Next Week</button>
-        <button data-filter="ambassadors">Ambassador Only</button>
-        <button data-filter="all">All</button>
-      </div>
-      <button id="showArchiveBtn">View Archive</button>
-    </div>
+<div id="top-controls">
+  <div id="upload-area">
+    <input type="file" id="csvFileInput" accept=".csv" />
   </div>
+
+  <div id="filters-area">
+    <div id="filter-buttons">
+      <button data-filter="today">Today</button>
+      <button data-filter="this-week">This Week</button>
+      <button data-filter="next-week">Next Week</button>
+      <button data-filter="ambassadors">Ambassador Only</button>
+      <button data-filter="all">All</button>
+    </div>
+    <button id="showArchiveBtn">View Archive</button>
+  </div>
+
+  <!-- INSERT THIS DATE FILTER SECTION BELOW -->
+  <div id="date-filter-area" style="margin-top: 12px;">
+    <label>Start-Date: <input type="date" id="filterStartDate" /></label>
+    <label style="margin-left:-12px;">End-Date: <input type="date" id="filterEndDate" /></label>
+    <button id="applyDateFilterBtn">Apply Date Filter</button>
+    <button id="clearDateFilterBtn">Clear Date Filter</button>
+  </div>
+</div>
+
 
   <!-- ASSIGNMENTS OVERVIEW PANEL -->
   <section id="assignments-panel">

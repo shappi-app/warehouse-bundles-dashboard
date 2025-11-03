@@ -49,6 +49,8 @@ if (saved) {
   }
 }
 let currentFilter = "all";
+let customStartDate = null;
+let customEndDate = null;
 
 // UI references
 const csvInput = document.getElementById("csvFileInput");
@@ -63,14 +65,48 @@ const closeDetailBtn = document.querySelector(".close-detail");
 const resetBtn = document.getElementById("reset-assignee-filter");
 const assignmentsList = document.getElementById("assignments-list");
 
+// New date filter elements
+const startDateInput = document.getElementById("filterStartDate");
+const endDateInput = document.getElementById("filterEndDate");
+const applyDateFilterBtn = document.getElementById("applyDateFilterBtn");
+const clearDateFilterBtn = document.getElementById("clearDateFilterBtn");
+
 // --- Event Listeners ---
 csvInput.addEventListener("change", handleFileUpload);
+
 filterButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
     currentFilter = btn.getAttribute("data-filter");
+    customStartDate = null;
+    customEndDate = null;
     renderAll();
   });
 });
+
+// 📅 Date filter event listeners
+applyDateFilterBtn.addEventListener("click", () => {
+  const start = startDateInput.value;
+  const end = endDateInput.value;
+
+  if (start && end) {
+    customStartDate = new Date(start);
+    customEndDate = new Date(end);
+    currentFilter = "custom-range";
+    renderAll();
+  } else {
+    alert("Please select both start and end dates.");
+  }
+});
+
+clearDateFilterBtn.addEventListener("click", () => {
+  startDateInput.value = "";
+  endDateInput.value = "";
+  customStartDate = null;
+  customEndDate = null;
+  currentFilter = "all";
+  renderAll();
+});
+
 showArchiveBtn.addEventListener("click", () => {
   archiveSection.classList.remove("hidden");
 });
@@ -480,7 +516,16 @@ function showDetails(card) {
 // --- Filters ---
 function passesFilter(card) {
   const shipDate = card.shipBundle ? new Date(card.shipBundle) : null;
+
+  if (currentFilter === "custom-range") {
+    if (!customStartDate || !customEndDate || !shipDate || isNaN(shipDate)) return false;
+    return shipDate >= customStartDate && shipDate <= customEndDate;
+  }
+
   if (currentFilter === "all") return true;
+
+  // (rest of your filter logic remains unchanged)
+
 
   if (currentFilter === "ambassadors") {
     const travelerNorm = (card.traveler || "").trim().toLowerCase();
