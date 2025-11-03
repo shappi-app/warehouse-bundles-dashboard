@@ -3,8 +3,12 @@
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
+const http = require("http");
+const { Server } = require("socket.io");
 
 const app = express();
+const httpServer = http.createServer(app);
+const io = new Server(httpServer);
 const PORT = process.env.PORT || 3000;
 
 const CARDS_FILE = path.join(__dirname, "data", "cards.json");
@@ -67,6 +71,13 @@ app.use(express.static(path.join(__dirname, "public")));
 // Debug log
 console.log("✅ Server script loaded.");
 
+io.on("connection", (socket) => {
+  console.log("🔌 Client connected", socket.id);
+  socket.on("disconnect", () => {
+    console.log("🔌 Client disconnected", socket.id);
+  });
+});
+
 // API: get all cards
 app.get("/api/cards", (req, res) => {
   res.json({ cards });
@@ -92,13 +103,7 @@ app.post("/api/uploadCsv", (req, res) => {
     if (!tripId) {
       console.log(`⚠️ Row ${idx+1} missing Trip ID, skipping`);
       return;
-    }
-    let accepted = parseInt(row["Items Accepted"] || "0", 10);
-    if (isNaN(accepted)) accepted = 0;
-    let ready = parseInt(row["Items Ready to process"] || "0", 10);
-    if (isNaN(ready)) ready = 0;
-    if (ready > accepted) ready = accepted;
-
+      
     // Compute initial bucket (replicate frontend logic)
     let bucket;
     if (row["Trip Verification Status"] !== "TX Approved") {
@@ -107,6 +112,12 @@ app.post("/api/uploadCsv", (req, res) => {
       bucket = "Approved, Not TA'd";
     } else if (ready > 0 && ready < accepted) {
       bucket = "Approved, TA in progress";
+    } else if (ready === accepted) {
+      bucket = "TA Completed, Ready for bundle";
+    } else {
+      bucket = "Pending/In Progress";
+    }
+bucket = "Approved, TA in progress";
     } else if (ready === accepted) {
       bucket = "TA Completed, Ready for bundle";
     } else {
@@ -131,6 +142,7 @@ app.post("/api/uploadCsv", (req, res) => {
     };
     cards[tripId] = card;
     console.log(`→ Card set: ${tripId} → bucket: ${bucket}`);
+    io.emit("card-updated", card);
   });
   saveCards(cards);
   console.log("✅ Cards after CSV merge:", Object.keys(cards).length);
@@ -148,6 +160,7 @@ app.post("/api/card", (req, res) => {
   cards[card.tripId] = card;
   saveCards(cards);
   console.log("✅ Card saved:", card.tripId);
+  io.emit("card-updated", card);
   return res.json({ success: true });
 });
 
@@ -160,6 +173,7 @@ app.post("/api/clearCompleted", (req, res) => {
     }
   });
   saveCards(cards);
+  io.emit("clear-completed");
   res.json({ success: true });
 });
 
@@ -168,6 +182,6 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 Server listening on port ${PORT}`);
 });
